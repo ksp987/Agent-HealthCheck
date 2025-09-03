@@ -1,0 +1,73 @@
+# IDE and tooling
+.vscode/
+.env
+.venv/
+.python-version
+
+# Azure local settings
+local.settings.json
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Build artifacts
+build/
+dist/
+.eggs/
+*.egg-info/
+*.egg
+pip-wheel-metadata/
+share/python-wheels/
+wheels/
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Testing and coverage
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Data files
+*.log
+*.pot
+*.mo
+db.sqlite3
+
+# Framework-specific
+instance/
+.webassets-cache
+.scrapy
+docs/_build/
+target/
+site
+
+# Project configs
+*.spyderproject
+.spyproject
+.ropeproject
+.pyre/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Azure Functions artifacts
+bin/
+obj/
+appsettings.json
+.python_packages/

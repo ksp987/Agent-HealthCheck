@@ -1,0 +1,4 @@
+# requirements.txt
+# dependencies
+azure-functions
+# ...other dependencies from your original requirements.txt...
