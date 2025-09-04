@@ -1,5 +1,7 @@
 import logging
 import azure.functions as func
+from src.ai_agents import gmail_reader
+
 
 app = func.FunctionApp()
 
@@ -9,4 +11,4 @@ def gmail_reader(myTimer: func.TimerRequest) -> None:
     if myTimer.past_due:
         logging.info('The timer is past due!')
 
-    logging.info('Python timer trigger function executed.')
+    gmail_reader.read_healthcheck_attachments()

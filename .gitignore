@@ -4,6 +4,9 @@
 .venv/
 .python-version
 
+#ignore credentials and token files
+/secrets/*
+
 # Azure local settings
 local.settings.json
 
