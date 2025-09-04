@@ -44,7 +44,7 @@ def read_healthcheck_attachments():
                 filepath = os.path.join(ATTACHMENTS_DIR, filename)
                 with open(filepath, 'wb') as f:
                     f.write(data)
-                print(f"📥 Downloaded attachment: {filename}")
+                print(f"Downloaded attachment: {filename}")
 
 if __name__ == "__main__":
     read_healthcheck_attachments()
