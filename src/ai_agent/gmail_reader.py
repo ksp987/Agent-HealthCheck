@@ -2,6 +2,7 @@
 
 import os
 import base64
+import logging
 import mimetypes
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
@@ -10,18 +11,30 @@ SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 TOKEN_PATH = os.path.join(os.path.dirname(__file__), '../../secrets/token.json')
 
 ATTACHMENTS_DIR = os.path.join(os.path.dirname(__file__), '../../data/raw')  # store attachments here
+
+# Ensure folder exists.
 os.makedirs(ATTACHMENTS_DIR, exist_ok=True)
 
+
+# Enable basic logging
+logging.basicConfig(level=logging.INFO)
+
 def read_healthcheck_attachments():
+    logging.info("Starting Gmail healthcheck attachment reader...")
+
     creds = Credentials.from_authorized_user_file(TOKEN_PATH, SCOPES)
     service = build('gmail', 'v1', credentials=creds)
 
-    results = service.users().messages().list(userId='me', q='subject:HealthCheck has:attachment', maxResults=5).execute()
+    query = 'subject:HealthCheck has:attachment'
+    logging.info(f"Querying Gmail with: {query}")
+    results = service.users().messages().list(userId='me', q=query, maxResults=5).execute()
     messages = results.get('messages', [])
 
     if not messages:
-        print("No HealthCheck emails with attachments found.")
+        logging.info("No HealthCheck emails with attachments found.")
         return
+    
+    logging.info(f"Found {len(messages)} message(s).")
 
     for msg in messages:
         msg_data = service.users().messages().get(userId='me', id=msg['id']).execute()
@@ -40,11 +53,18 @@ def read_healthcheck_attachments():
                 ).execute()
 
                 data = base64.urlsafe_b64decode(attachment['data'].encode('UTF-8'))
-
                 filepath = os.path.join(ATTACHMENTS_DIR, filename)
+
+                #skip if file already exists
+                if os.path.exists(filepath):
+                    logging.info(f"Skipping existing file: {filename}")
+                    continue
+
                 with open(filepath, 'wb') as f:
                     f.write(data)
-                print(f"Downloaded attachment: {filename}")
+                logging.info(f"Downloaded attachment: {filename}")
+    
+    logging.info("Gmail reader finished.")
 
 if __name__ == "__main__":
     read_healthcheck_attachments()
