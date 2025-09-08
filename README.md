@@ -13,7 +13,7 @@ This project is an Azure-based AI automation agent that:
 | Name                     | Role                    | GitHub Username       |
 |--------------------------|-------------------------|------------------------|
 | Sai Praveen Kallepalli   | Developer / Intern      | [@ksp987](https://github.com/ksp987) |
-| Ranil Perera          | Project Supervisor      | @username |
+| Ranil Perera          | Project Supervisor      | ranil@onsys.com.au |
 
 > Special thanks to Ranil Perara for guidance and review support during the internship project.
 
