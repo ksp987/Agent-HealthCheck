@@ -1,70 +1,61 @@
-# src/ai_agents/gmail_reader.py
+# src/ai_agent/gmail_reader.py
 
 import os
-import base64
+import json
 import logging
-import mimetypes
-from google.oauth2.credentials import Credentials
+from google.oauth2 import service_account
 from googleapiclient.discovery import build
+from dotenv import load_dotenv
 
-SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
-TOKEN_PATH = os.path.join(os.path.dirname(__file__), '../../secrets/token.json')
+load_dotenv()  # Load environment variables from .env file
 
-ATTACHMENTS_DIR = os.path.join(os.path.dirname(__file__), '../../data/raw')  # store attachments here
-
-# Ensure folder exists.
-os.makedirs(ATTACHMENTS_DIR, exist_ok=True)
-
-
-# Enable basic logging
+# Logging setup
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-def read_healthcheck_attachments():
-    logging.info("Starting Gmail healthcheck attachment reader...")
+# Gmail API scope
+SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
 
-    creds = Credentials.from_authorized_user_file(TOKEN_PATH, SCOPES)
-    service = build('gmail', 'v1', credentials=creds)
+# STEP 1: Load service account credentials (from GitHub Secret or .env)
+cred_json_str = os.getenv("GMAIL_SERVICE_ACCOUNT_JSON")
 
-    query = 'subject:HealthCheck has:attachment'
-    logging.info(f"Querying Gmail with: {query}")
-    results = service.users().messages().list(userId='me', q=query, maxResults=5).execute()
-    messages = results.get('messages', [])
+if not cred_json_str:
+    raise EnvironmentError("GMAIL_SERVICE_ACCOUNT_JSON not found in environment variables")
 
-    if not messages:
-        logging.info("No HealthCheck emails with attachments found.")
-        return
-    
-    logging.info(f"Found {len(messages)} message(s).")
+logger.info("Loaded Gmail credentials from environment")
 
-    for msg in messages:
-        msg_data = service.users().messages().get(userId='me', id=msg['id']).execute()
-        parts = msg_data['payload'].get('parts', [])
+# STEP 2: Parse the JSON string into a Python dict
+try:
+    service_account_info = json.loads(cred_json_str)
+except json.JSONDecodeError as e:
+    raise ValueError("Invalid JSON in Gmail credentials") from e
 
-        for part in parts:
-            filename = part.get("filename")
-            body = part.get("body", {})
-            att_id = body.get("attachmentId")
+# STEP 3: Create service account credentials with delegated user
+credentials = service_account.Credentials.from_service_account_info(
+    service_account_info,
+    scopes=SCOPES
+)
 
-            if att_id and filename:
-                attachment = service.users().messages().attachments().get(
-                    userId='me',
-                    messageId=msg['id'],
-                    id=att_id
-                ).execute()
+# # If you want to impersonate support@onsys.com.au
+# delegated_credentials = credentials.with_subject("support@onsys.com.au")
 
-                data = base64.urlsafe_b64decode(attachment['data'].encode('UTF-8'))
-                filepath = os.path.join(ATTACHMENTS_DIR, filename)
+# STEP 4: Build the Gmail API client
+try:
+    service = build("gmail", "v1", credentials=delegated_credentials)
+    logger.info("Gmail API client initialized successfully")
+except Exception as e:
+    raise RuntimeError("Failed to initialize Gmail API client") from e
 
-                #skip if file already exists
-                if os.path.exists(filepath):
-                    logging.info(f"Skipping existing file: {filename}")
-                    continue
-
-                with open(filepath, 'wb') as f:
-                    f.write(data)
-                logging.info(f"Downloaded attachment: {filename}")
-    
-    logging.info("Gmail reader finished.")
+# STEP 5: Sample test – List latest emails
+def list_emails():
+    try:
+        response = service.users().messages().list(userId='me', maxResults=5).execute()
+        messages = response.get('messages', [])
+        for msg in messages:
+            logger.info(f"Email ID: {msg['id']}")
+    except Exception as e:
+        logger.error(f"Failed to fetch emails: {str(e)}")
 
 if __name__ == "__main__":
-    read_healthcheck_attachments()
+    logger.info( "Starting Gmail healthcheck email reader...")
+    list_emails()
