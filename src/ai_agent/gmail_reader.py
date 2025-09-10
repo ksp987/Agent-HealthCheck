@@ -37,8 +37,7 @@ credentials = service_account.Credentials.from_service_account_info(
     scopes=SCOPES
 )
 
-# For Onsys support email access, uncomment the following line:
-
+# Onsys support email access
 delegated_credentials = credentials.with_subject("support@onsys.com.au")
 service = build("gmail", "v1", credentials=delegated_credentials)
 
