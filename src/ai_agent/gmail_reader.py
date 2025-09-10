@@ -16,28 +16,32 @@ logger = logging.getLogger(__name__)
 # Gmail API scope
 SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
 
-# STEP 1: Load service account credentials (from GitHub Secret or .env)
-cred_json_str = os.getenv("GMAIL_SERVICE_ACCOUNT_JSON")
+# STEP 1: Load path to service account JSON from environment
+cred_file_path = os.getenv("GMAIL_SERVICE_ACCOUNT_JSON")
 
-if not cred_json_str:
-    raise EnvironmentError("GMAIL_SERVICE_ACCOUNT_JSON not found in environment variables")
+if not cred_file_path or not os.path.exists(cred_file_path):
+    raise EnvironmentError("GMAIL_SERVICE_ACCOUNT_JSON path not found or invalid")
 
-logger.info("Loaded Gmail credentials from environment")
+logger.info("Loaded Gmail credentials file path from environment")
 
-# STEP 2: Parse the JSON string into a Python dict
+# STEP 2: Read and parse the JSON file
 try:
-    service_account_info = json.loads(cred_json_str)
-except json.JSONDecodeError as e:
-    raise ValueError("Invalid JSON in Gmail credentials") from e
+    with open(cred_file_path, "r") as f:
+        service_account_info = json.load(f)
+except Exception as e:
+    raise ValueError("Failed to read or parse Gmail service account JSON file") from e
 
-# STEP 3: Create service account credentials with delegated user
+# STEP 3: Create service account credentials
 credentials = service_account.Credentials.from_service_account_info(
     service_account_info,
     scopes=SCOPES
 )
 
-# # If you want to impersonate support@onsys.com.au
-# delegated_credentials = credentials.with_subject("support@onsys.com.au")
+# For Onsys support email access, uncomment the following line:
+
+delegated_credentials = credentials.with_subject("support@onsys.com.au")
+service = build("gmail", "v1", credentials=delegated_credentials)
+
 
 # STEP 4: Build the Gmail API client
 try:
@@ -49,7 +53,7 @@ except Exception as e:
 # STEP 5: Sample test – List latest emails
 def list_emails():
     try:
-        response = service.users().messages().list(userId='me', maxResults=5).execute()
+        response = service.users().messages().list(userId='me', maxResults=20).execute()
         messages = response.get('messages', [])
         for msg in messages:
             logger.info(f"Email ID: {msg['id']}")
@@ -57,5 +61,5 @@ def list_emails():
         logger.error(f"Failed to fetch emails: {str(e)}")
 
 if __name__ == "__main__":
-    logger.info( "Starting Gmail healthcheck email reader...")
+    logger.info("Starting Gmail healthcheck email reader...")
     list_emails()
