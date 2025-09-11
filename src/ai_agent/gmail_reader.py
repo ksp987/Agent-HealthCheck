@@ -8,6 +8,8 @@ from googleapiclient.discovery import build
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from pytz import timezone
+from datetime import datetime, timedelta
+from pytz import timezone
 
 load_dotenv()  # Load environment variables from .env file
 
@@ -60,7 +62,7 @@ def list_emails():
         fifteen_minutes_ago = now_melbourne - timedelta(minutes=15)
         epoch_time = int(fifteen_minutes_ago.timestamp())
         # Gmail query to find emails after the calculated time with specific subject
-        query = f"after:{epoch_time} subject:'Health Check Report' subject:'Daily Healthcheck'"
+        query = f"after:{epoch_time} subject:'Health Check Report'"
         user_id = 'me'
         emails = []
         next_page_token = None
