@@ -60,7 +60,7 @@ def list_emails():
         fifteen_minutes_ago = now_melbourne - timedelta(minutes=15)
         epoch_time = int(fifteen_minutes_ago.timestamp())
         # Gmail query to find emails after the calculated time with specific subject
-        query = f"after:{epoch_time} subject:'Health Check Report'"
+        query = f"after:{epoch_time} subject:'Health Check Report' subject:'Daily Healthcheck'"
         user_id = 'me'
         emails = []
         next_page_token = None
