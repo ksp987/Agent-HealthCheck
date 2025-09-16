@@ -4,6 +4,7 @@ import logging
 import base64
 from datetime import datetime, timedelta
 from typing import List, Dict
+import json
 
 from googleapiclient.discovery import Resource
 from pytz import timezone
@@ -95,21 +96,26 @@ class EmailProcessor:
         if not body.strip():
             return {"error": "empty body"}
 
-        # prompt = f"""
-        # You are a monitoring assistant. Parse the following SQL Server health check email 
-        # and extract issues/metrics as JSON with keys:
-        # host, sql_services, disk_usage, cpu, memory, backups, failed_jobs, alerts.
+        prompt = f"""
+        You are a monitoring assistant. Parse the following SQL Server health check email 
+        and extract issues/metrics as JSON with keys:
+        host, sql_services, disk_usage, cpu, memory, backups, failed_jobs, alerts.
 
-        # Email:
-        # {body}
-        # """
+        Email:
+        {body}
+        """
 
         resp = client.chat.completions.create(
             model=deployment,  
-            messages=[{"role": "user", "content": "Summarise the SQL Server health check email"}],
+            messages=[{"role": "user", "content": prompt}],
             response_format={"type": "json_object"},
         )
-        return resp.choices[0].message.parsed
+        raw_content = resp.choices[0].message.content
+        try:
+            return json.loads(raw_content)
+        except Exception as e:
+            return {"error": f"Failed to parse JSON: {str(e)}", "raw": raw_content}
+    
 
     # -------------------- End-to-End Pipeline --------------------
     def process_recent_messages(self, minutes: int, subject: str) -> List[Dict]:
