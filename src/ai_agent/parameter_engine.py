@@ -41,7 +41,7 @@ class ParameterEngine:
             "alerts": self.alerts,
         }
 
-        logger.info("RuleEngine evaluation complete: %s", result)
+        logger.info("Evaluation: %s", result["severity"])
         return result
 
     # -------------------- Rules --------------------
