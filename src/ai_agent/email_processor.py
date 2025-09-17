@@ -87,6 +87,21 @@ class EmailProcessor:
 
         payload = msg.get("payload", {})
         return self._decode_body(payload, prefer_html=prefer_html)
+    
+    def fetch_message_metadata(self, msg_id: str) -> Dict:
+        msg = self.service.users().messages().get(
+            userId=self.user_id,
+            id=msg_id,
+            format="metadata",
+            metadataHeaders=["Subject", "From", "Date"]
+        ).execute()
+
+        headers = {h["name"]: h["value"] for h in msg["payload"]["headers"]}
+        return {
+            "subject": headers.get("Subject"),
+            "from": headers.get("From"),
+            "date": headers.get("Date"),
+        }
 
     # -------------------- Azure OpenAI Insights --------------------
     def extract_insights(self, body: str) -> Dict:
