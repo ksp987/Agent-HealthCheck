@@ -1,7 +1,7 @@
 from unittest.mock import patch, MagicMock, mock_open
 import json
 import pytest
-from src.ai_agent.gmail_service import GmailService
+from src.core.gmail_service import GmailService
 
 @patch("src.ai_agent.gmail_service.build")
 @patch("src.ai_agent.gmail_service.service_account.Credentials.from_service_account_info")

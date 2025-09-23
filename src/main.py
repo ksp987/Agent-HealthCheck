@@ -1,8 +1,8 @@
 #src/main.py
 
-from src.ai_agent.gmail_service import GmailService
-from src.ai_agent.email_processor import EmailProcessor
-from src.ai_agent.parameter_engine import ParameterEngine
+from src.core.gmail_service import GmailService
+from src.core.email_processor import EmailProcessor
+from src.core.parameter_engine import ParameterEngine
 
 def main():
     gmail = GmailService("GMAIL_SERVICE_ACCOUNT_JSON", "GMAIL_DELEGATED_USER")

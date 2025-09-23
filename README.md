@@ -10,12 +10,10 @@ This repository demonstrates an event-driven, production-oriented pattern on Azu
 
 ## Architecture
 
-flowchart LR
-    A["Gmail Inbox"] -->|Fetch Emails| B["Azure Function App - Timer"]
-    B -->|Extract Body & Attachments| C["Email Processor"]
-    C -->|Send Text| D["Azure OpenAI Summarization"]
-    D -->|Structured Insights| E["Parameter Engine (Rules)"]
-    E -->|Flag Issues| F["Microsoft Teams Channel"]
+## Hexagonal Architecture
+
+![Hexagonal Architecture](docs/Architecture.png)
+
 
 ### Features
 
