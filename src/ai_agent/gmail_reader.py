@@ -6,6 +6,8 @@ import logging
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from dotenv import load_dotenv
+from datetime import datetime, timedelta
+from pytz import timezone
 
 load_dotenv()  # Load environment variables from .env file
 
@@ -52,10 +54,31 @@ except Exception as e:
 # STEP 5: Sample test – List latest emails
 def list_emails():
     try:
-        response = service.users().messages().list(userId='me', maxResults=20).execute()
-        messages = response.get('messages', [])
-        for msg in messages:
+        # Calculate the timestamp for 15 minutes ago in Melbourne timezone
+        melbourne_tz = timezone('Australia/Melbourne')
+        now_melbourne = datetime.now(melbourne_tz)
+        fifteen_minutes_ago = now_melbourne - timedelta(minutes=15)
+        epoch_time = int(fifteen_minutes_ago.timestamp())
+        # Gmail query to find emails after the calculated time with specific subject
+        query = f"after:{epoch_time} subject:'Health Check Report' subject:'Daily Healthcheck'"
+        user_id = 'me'
+        emails = []
+        next_page_token = None
+        while True:
+            response = service.users().messages().list(userId=user_id, 
+                                                       q=query, 
+                                                       pageToken=next_page_token).execute()
+            messages = response.get('messages', [])
+            emails.extend(messages)
+
+            next_page_token = response.get('nextPageToken')
+            if not next_page_token:
+                break
+
+        logger.info(f"Fetched {len(emails)} emails matching the criteria.")
+        for msg in emails:
             logger.info(f"Email ID: {msg['id']}")
+
     except Exception as e:
         logger.error(f"Failed to fetch emails: {str(e)}")
 
