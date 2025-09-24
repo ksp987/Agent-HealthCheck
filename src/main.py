@@ -1,26 +1,31 @@
-#src/main.py
+# src/main.py
 
-from src.core.gmail_service import GmailService
-from src.core.email_processor import EmailProcessor
+import logging
+from src.adapters.gmail_adapter import GmailAdapter
 from src.core.parameter_engine import ParameterEngine
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
 def main():
-    gmail = GmailService("GMAIL_SERVICE_ACCOUNT_JSON", "GMAIL_DELEGATED_USER")
-    processor = EmailProcessor(gmail.service)
+    # Use adapter (implements GetEmailPort)
+    adapter = GmailAdapter("GMAIL_SERVICE_ACCOUNT_JSON", "GMAIL_DELEGATED_USER")
 
-    results = processor.process_recent_messages(130, subject="Health Check Report")
-    
+    # Fetch emails (with metadata + insights)
+    results = adapter.fetch_emails("Health Check Report", 90)
+
     for msg in results:
-        print("\n Message ID:", msg["id"])
-        insights = msg["insights"]
+        print("\nMessage ID:", msg["id"])
+        print("From:", msg.get("from"))
+        print("Date:", msg.get("date"))
+        print("Subject:", msg.get("subject"))
+        print("Raw Insights:", msg["insights"])
 
-        engine = ParameterEngine(insights)
+        # Evaluate insights with ParameterEngine
+        engine = ParameterEngine(msg["insights"])
         evaluation = engine.evaluate()
-
-        print(" Raw Insights:", insights)
-        # print(" Evaluation:", evaluation)
-        metadata = processor.fetch_message_metadata(msg["id"])
-        print(f"Date: {metadata['date']}")
+        print("Evaluation:", evaluation)
 
 
 if __name__ == "__main__":

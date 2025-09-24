@@ -1,39 +1,39 @@
-# src/ai_agent/email_processor.py
+# src/infrastructure/email_processor.py
 
 import logging
 import base64
-from datetime import datetime, timedelta
-from typing import List, Dict
 import json
+import os
+from datetime import datetime, timedelta
+from typing import List, Dict, Any
 
-from googleapiclient.discovery import Resource
 from pytz import timezone
 from openai import OpenAI
-import os
 
 logger = logging.getLogger(__name__)
-
-# Setup Azure OpenAI client from environment
-client = OpenAI(
-    base_url=os.getenv("AZURE_OPENAI_ENDPOINT"),
-    api_key=os.getenv("AZURE_OPENAI_API_KEY")
-)
-
-deployment = os.getenv("AZURE_OPENAI_DEPLOYMENT")  # "gpt-4.1"
 
 
 class EmailProcessor:
     """
-    Process recent Gmail messages:
-      - Search messages within last X minutes (subject required)
-      - Extract plain-text or HTML bodies
-      - Run through Azure OpenAI to produce structured insights
+    Infrastructure service for working with Gmail + OpenAI.
+    Responsibilities:
+      - Query Gmail for recent messages by subject
+      - Decode email bodies (plain or HTML)
+      - Fetch metadata (subject, from, date)
+      - Run bodies through Azure OpenAI to produce structured insights
     """
 
-    def __init__(self, service: Resource, user_id: str = "me", tz_name: str = "Australia/Melbourne"):
+    def __init__(self, service: Any, user_id: str = "me", tz_name: str = "Australia/Melbourne"):
         self.service = service
         self.user_id = user_id
         self.tz = timezone(tz_name)
+
+        # Initialize OpenAI client from env
+        self.client = OpenAI(
+            base_url=os.getenv("AZURE_OPENAI_ENDPOINT"),
+            api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+        )
+        self.deployment = os.getenv("AZURE_OPENAI_DEPLOYMENT")  # e.g., "gpt-4.1"
 
     # -------------------- Gmail Fetching --------------------
     def _epoch_seconds_now_minus(self, minutes: int) -> int:
@@ -42,13 +42,11 @@ class EmailProcessor:
         return int(since.timestamp())
 
     def _build_query(self, since_epoch: int, subject: str) -> str:
-        # Subject is mandatory
         return f"after:{since_epoch} subject:\"{subject}\""
 
     def find_recent_messages(self, minutes: int, subject: str, max_results: int = 50) -> List[Dict]:
         """
-        Returns a list of message stubs: [{'id': '...', 'threadId': '...'}, ...]
-        Always filtered by subject.
+        Return message stubs: [{'id': '...', 'threadId': '...'}, ...]
         """
         since_epoch = self._epoch_seconds_now_minus(minutes)
         q = self._build_query(since_epoch, subject)
@@ -87,13 +85,13 @@ class EmailProcessor:
 
         payload = msg.get("payload", {})
         return self._decode_body(payload, prefer_html=prefer_html)
-    
+
     def fetch_message_metadata(self, msg_id: str) -> Dict:
         msg = self.service.users().messages().get(
             userId=self.user_id,
             id=msg_id,
             format="metadata",
-            metadataHeaders=["Subject", "From", "Date"]
+            metadataHeaders=["Subject", "From", "Date"],
         ).execute()
 
         headers = {h["name"]: h["value"] for h in msg["payload"]["headers"]}
@@ -105,9 +103,6 @@ class EmailProcessor:
 
     # -------------------- Azure OpenAI Insights --------------------
     def extract_insights(self, body: str) -> Dict:
-        """
-        Uses Azure OpenAI to parse health check email body into structured JSON.
-        """
         if not body.strip():
             return {"error": "empty body"}
 
@@ -120,33 +115,39 @@ class EmailProcessor:
         {body}
         """
 
-        resp = client.chat.completions.create(
-            model=deployment,  
-            messages=[{"role": "user", "content": prompt}],
-            response_format={"type": "json_object"},
-        )
-        raw_content = resp.choices[0].message.content
         try:
+            resp = self.client.chat.completions.create(
+                model=self.deployment,
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"},
+            )
+            raw_content = resp.choices[0].message.content
             return json.loads(raw_content)
         except Exception as e:
-            return {"error": f"Failed to parse JSON: {str(e)}", "raw": raw_content}
-    
+            logger.error("Failed to parse JSON from OpenAI: %s", str(e))
+            return {"error": f"Failed to parse JSON: {str(e)}"}
 
     # -------------------- End-to-End Pipeline --------------------
     def process_recent_messages(self, minutes: int, subject: str) -> List[Dict]:
         """
         Find all messages in last X minutes filtered by subject,
-        decode bodies, and extract insights.
-        Returns list of structured JSON dicts (one per email).
+        decode bodies, fetch metadata, and extract insights.
+        Returns list of dicts with {id, subject, from, date, insights}.
         """
         messages = self.find_recent_messages(minutes=minutes, subject=subject)
         results = []
 
         for msg in messages:
             msg_id = msg["id"]
-            body = self.fetch_message_body(msg_id)
-            insights = self.extract_insights(body)
-            results.append({"id": msg_id, "insights": insights})
+            try:
+                body = self.fetch_message_body(msg_id)
+                insights = self.extract_insights(body)
+                metadata = self.fetch_message_metadata(msg_id)
+
+                results.append({"id": msg_id, "insights": insights, **metadata})
+            except Exception as e:
+                logger.error("Failed to process message %s: %s", msg_id, str(e))
 
         logger.info("Processed %d messages for subject '%s'", len(results), subject)
         return results
+
