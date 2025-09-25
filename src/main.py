@@ -2,6 +2,7 @@
 
 import logging
 from src.adapters.gmail_adapter import GmailAdapter
+from src.adapters.postgres_adapter import PostgresAdapter
 from src.core.parameter_engine import ParameterEngine
 
 logging.basicConfig(level=logging.INFO)
@@ -10,10 +11,11 @@ logger = logging.getLogger(__name__)
 
 def main():
     # Use adapter (implements GetEmailPort)
-    adapter = GmailAdapter("GMAIL_SERVICE_ACCOUNT_JSON", "GMAIL_DELEGATED_USER")
+    email_adapter = GmailAdapter("GMAIL_SERVICE_ACCOUNT_JSON", "GMAIL_DELEGATED_USER")
+    storage_adapter = PostgresAdapter("AZURE_SQL_CONN")
 
     # Fetch emails (with metadata + insights)
-    results = adapter.fetch_emails("Health Check Report", 90)
+    results = email_adapter.fetch_emails("Health Check Report", 90)
 
     for msg in results:
         print("\nMessage ID:", msg["id"])
