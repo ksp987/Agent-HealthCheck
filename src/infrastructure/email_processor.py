@@ -10,6 +10,9 @@ from typing import List, Dict, Any
 from pytz import timezone
 from openai import OpenAI
 
+from src.core.mappers import dict_to_healthcheck
+from src.core.models import HealthCheckReport
+
 logger = logging.getLogger(__name__)
 
 
@@ -128,7 +131,7 @@ class EmailProcessor:
             return {"error": f"Failed to parse JSON: {str(e)}"}
 
     # -------------------- End-to-End Pipeline --------------------
-    def process_recent_messages(self, minutes: int, subject: str) -> List[Dict]:
+    def process_recent_messages(self, minutes: int, subject: str) -> List[HealthCheckReport]:
         """
         Find all messages in last X minutes filtered by subject,
         decode bodies, fetch metadata, and extract insights.
@@ -144,7 +147,7 @@ class EmailProcessor:
                 insights = self.extract_insights(body)
                 metadata = self.fetch_message_metadata(msg_id)
 
-                results.append({"id": msg_id, "insights": insights, **metadata})
+                results.append(dict_to_healthcheck(msg_id, insights, metadata))
             except Exception as e:
                 logger.error("Failed to process message %s: %s", msg_id, str(e))
 

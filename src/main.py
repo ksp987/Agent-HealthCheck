@@ -12,20 +12,23 @@ logger = logging.getLogger(__name__)
 def main():
     # Use adapter (implements GetEmailPort)
     email_adapter = GmailAdapter("GMAIL_SERVICE_ACCOUNT_JSON", "GMAIL_DELEGATED_USER")
-    storage_adapter = PostgresAdapter("AZURE_SQL_CONN")
+    # storage_adapter = PostgresAdapter("AZURE_SQL_CONN")
 
     # Fetch emails (with metadata + insights)
-    results = email_adapter.fetch_emails("Health Check Report", 90)
+    results = email_adapter.fetch_emails("Health Check Report", 170)
 
-    for msg in results:
-        print("\nMessage ID:", msg["id"])
-        print("From:", msg.get("from"))
-        print("Date:", msg.get("date"))
-        print("Subject:", msg.get("subject"))
-        print("Raw Insights:", msg["insights"])
+    
+    for report in results:  # report is a HealthCheckReport
+        print("\nMessage ID:", report.message_id)
+        print("From:", report.sender)
+        print("Date:", report.date)
+        print("Subject:", report.subject)
+        print("Host:", report.host)
+        print("SQL Services:", [s.name for s in report.services])
+        print("Disk Usage:", [(d.drive, d.free_percent) for d in report.disks])
 
         # Evaluate insights with ParameterEngine
-        engine = ParameterEngine(msg["insights"])
+        engine = ParameterEngine(report)
         evaluation = engine.evaluate()
         print("Evaluation:", evaluation)
 
