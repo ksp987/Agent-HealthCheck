@@ -15,7 +15,7 @@ def main():
     # storage_adapter = PostgresAdapter("AZURE_SQL_CONN")
 
     # Fetch emails (with metadata + insights)
-    results = email_adapter.fetch_emails("Health Check Report", 170)
+    results = email_adapter.fetch_emails("Health Check Report", 180)
 
     
     for report in results:  # report is a HealthCheckReport
@@ -30,8 +30,10 @@ def main():
         # Evaluate insights with ParameterEngine
         engine = ParameterEngine(report)
         evaluation = engine.evaluate()
-        print("Evaluation:", evaluation)
 
+        print("Final Severity:", evaluation.severity)
+        for alert in evaluation.alerts:
+            print(f"- [{alert.level.upper()}] {alert.message}")
 
 if __name__ == "__main__":
     main()

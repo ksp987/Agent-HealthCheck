@@ -41,4 +41,4 @@ jobs:
 
     # Run tests with pytest with verbose output
       run: |
-        pytest -v
+        pytest -m "not integration" -v

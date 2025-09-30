@@ -4,13 +4,11 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Dict, Optional
 
-
 @dataclass
 class SqlService:
     name: str
     display_name: str
     status: str
-
 
 @dataclass
 class DiskUsage:
@@ -20,18 +18,15 @@ class DiskUsage:
     free_percent: float
     issue: Optional[str] = None
 
-
 @dataclass
 class CpuSample:
     timestamp: datetime
     percent: float
 
-
 @dataclass
 class CpuUsage:
     samples: List[CpuSample]
     top_db_usage: List[Dict[str, float]]
-
 
 @dataclass
 class MemoryUsage:
@@ -40,13 +35,11 @@ class MemoryUsage:
     physical_gb: int
     buffer_top_db: List[Dict[str, float]]
 
-
 @dataclass
 class BackupIssue:
     database: str
     days_since_last: int
     last_full_backup: str
-
 
 @dataclass
 class BackupStatus:
@@ -54,18 +47,15 @@ class BackupStatus:
     databases_missing_log_backup: List[BackupIssue]
     note: str
 
-
 @dataclass
 class Alert:
     level: str
     message: str
 
-
 @dataclass
 class Evaluation:
     severity: str
     alerts: List[Alert]
-
 
 @dataclass
 class HealthCheckReport:
