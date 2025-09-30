@@ -14,7 +14,7 @@ class DummyProcessor:
                 "insights": {"cpu": "ok"},
             }
         ]
-
+@pytest.mark.unit
 def test_fetch_emails_returns_metadata_and_insights():
     # Inject DummyProcessor → avoids OpenAI and Gmail entirely
     adapter = GmailAdapter("CRED_ENV", "USER_ENV", processor=DummyProcessor())

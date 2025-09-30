@@ -16,7 +16,7 @@ class DummyEmailProcessor:
                 "insights": {"disk_usage": "healthy", "cpu": "ok"},
             }
         ]
-
+@pytest.mark.unit
 def test_adapter_implements_port():
     # Inject DummyProcessor so no real Gmail/OpenAI is touched
     adapter: GetEmailPort = GmailAdapter("CRED_ENV", "USER_ENV", processor=DummyEmailProcessor())

@@ -1,4 +1,4 @@
-# tests/integration/test_gmail_adapter_real.py
+# tests/integration/test_gmail_adapter_integration.py
 
 import pytest
 from src.adapters.gmail_adapter import GmailAdapter

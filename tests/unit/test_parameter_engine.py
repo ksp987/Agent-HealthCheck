@@ -34,7 +34,7 @@ def make_base_report() -> HealthCheckReport:
         evaluation=Evaluation(severity="info", alerts=[]),
     )
 
-
+@pytest.mark.unit
 def test_clean_report_gives_info():
     report = make_base_report()
     engine = ParameterEngine(report)
@@ -42,7 +42,7 @@ def test_clean_report_gives_info():
     assert result.severity == "info"
     assert result.alerts == []
 
-
+@pytest.mark.unit
 def test_disk_low_space_triggers_warning_and_critical():
     report = make_base_report()
     report.disks = [
@@ -57,7 +57,7 @@ def test_disk_low_space_triggers_warning_and_critical():
     assert "critical" in levels
     assert result.severity == "critical"
 
-
+@pytest.mark.unit
 def test_service_not_running_triggers_critical():
     report = make_base_report()
     report.services[0].status = "stopped"
@@ -67,7 +67,7 @@ def test_service_not_running_triggers_critical():
     assert result.severity == "critical"
     assert any("stopped" in a.message for a in result.alerts)
 
-
+@pytest.mark.unit
 def test_backup_issue_triggers_warning():
     report = make_base_report()
     report.backups.databases_missing_log_backup = [
@@ -79,7 +79,7 @@ def test_backup_issue_triggers_warning():
     assert result.severity == "warning"
     assert any("SalesDB" in a.message for a in result.alerts)
 
-
+@pytest.mark.unit
 def test_offline_db_triggers_critical():
     report = make_base_report()
     report.backups.databases_offline = ["FinanceDB"]
@@ -89,7 +89,7 @@ def test_offline_db_triggers_critical():
     assert result.severity == "critical"
     assert any("FinanceDB" in a.message for a in result.alerts)
 
-
+@pytest.mark.unit
 def test_failed_job_triggers_warning():
     report = make_base_report()
     report.failed_jobs = ["Nightly ETL"]
