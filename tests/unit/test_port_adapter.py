@@ -17,21 +17,12 @@ class DummyEmailProcessor:
             }
         ]
 
-class DummyGmailService:
-    def get_service(self):
-        return "fake-gmail-service"
-
-
-def test_adapter_implements_port(monkeypatch):
-    # Patch GmailService to avoid real Gmail API
-    monkeypatch.setattr("src.adapters.gmail_adapter.GmailService", lambda c, d: DummyGmailService())
-
-    # Construct adapter
-    adapter: GetEmailPort = GmailAdapter("CRED_ENV", "USER_ENV")
-    adapter.processor = DummyEmailProcessor()  # swap in fake processor
-
+def test_adapter_implements_port():
+    # Inject DummyProcessor so no real Gmail/OpenAI is touched
+    adapter: GetEmailPort = GmailAdapter("CRED_ENV", "USER_ENV", processor=DummyEmailProcessor())
+    
     # Exercise the port method
-    results = adapter.fetch_emails("Health Check Report", 15)
+    results = adapter.fetch_emails("Health Check Report", 30)
 
     # Assertions
     assert isinstance(results, list)
