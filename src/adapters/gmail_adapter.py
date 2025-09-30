@@ -17,9 +17,11 @@ class GmailAdapter(GetEmailPort):
     Delegates Gmail + OpenAI work to the infrastructure EmailProcessor.
     """
 
-    def __init__(self, credentials_env: str, delegated_user_env: str, tz_name: str = "Australia/Melbourne"):
+    def __init__(self, credentials_env: str, delegated_user_env: str, tz_name: str = "Australia/Melbourne", processor=None):
         gmail = GmailService(credentials_env, delegated_user_env)
-        self.processor = EmailProcessor(gmail.get_service())
+
+        # Use injected processor if provided (for testing)
+        self.processor = processor or EmailProcessor(gmail.get_service())
         self.tz = timezone(tz_name)
 
     def fetch_emails(self, subject: str, minutes: int):

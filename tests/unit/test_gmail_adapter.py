@@ -15,21 +15,9 @@ class DummyProcessor:
             }
         ]
 
-class DummyGmailService:
-    def get_service(self):
-        return "fake-service"
-
-
-def test_fetch_emails_returns_metadata_and_insights(monkeypatch):
-    # Patch GmailService used inside GmailAdapter
-    monkeypatch.setattr("src.adapters.gmail_adapter.GmailService", lambda c, d: DummyGmailService())
-
-    # Now GmailAdapter won't touch real Gmail
-    adapter = GmailAdapter("CRED_ENV", "USER_ENV")
-
-    # Replace real processor with dummy
-    adapter.processor = DummyProcessor()
-
+def test_fetch_emails_returns_metadata_and_insights():
+    # Inject DummyProcessor → avoids OpenAI and Gmail entirely
+    adapter = GmailAdapter("CRED_ENV", "USER_ENV", processor=DummyProcessor())
     results = adapter.fetch_emails("Health Check Report", 30)
 
     assert len(results) == 1
