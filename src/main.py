@@ -15,7 +15,7 @@ def main():
     # storage_adapter = PostgresAdapter("AZURE_SQL_CONN")
 
     # Fetch emails (with metadata + insights)
-    results = email_adapter.fetch_emails("Health Check Report", 180)
+    results = email_adapter.fetch_emails("Health Check Report", 200)
 
     
     for report in results:  # report is a HealthCheckReport
