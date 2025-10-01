@@ -85,16 +85,15 @@ def test_extract_insights(mocker):
     # Fake OpenAI response JSON
     fake_json = '{"alerts": [], "cpu": {}, "disk_usage": []}'
 
-    # Patch completions.create to return our fake response
-    mocker.patch.object(
-        processor.client.chat.completions,
-        "create",
-        return_value=mocker.MagicMock(
-            choices=[mocker.MagicMock(
-                message=mocker.MagicMock(content=fake_json)
-            )]
-        )
+    # Create the fake return chain manually
+    processor.client.chat = mocker.MagicMock()
+    processor.client.chat.completions = mocker.MagicMock()
+    processor.client.chat.completions.create.return_value = mocker.MagicMock(
+        choices=[mocker.MagicMock(
+            message=mocker.MagicMock(content=fake_json)
+        )]
     )
+    
     body = "Sample email body for insights extraction."
     insights = processor.extract_insights(body)
     assert 'alerts' in insights
